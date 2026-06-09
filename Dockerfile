@@ -25,18 +25,17 @@ RUN apk add --no-cache alpine-conf ca-certificates nodejs &&\
     rm -rf /usr/bin/node
 COPY --from=builder /app/subs-check /app/subs-check
 
-# ──────────────────────────────────────────────────────────────
-# 🌟 核心修改
-# ──────────────────────────────────────────────────────────────
+# 1. 复制配置文件
 COPY --from=builder /app/config/config.example.yaml /app/config/config.yaml
 
-# ──────────────────────────────────────────────────────────────
-# 🌟 核心修改
-# ──────────────────────────────────────────────────────────────
-CMD sed -i "s|save-method: local|save-method: gist|g" /app/config/config.yaml && \
-    sed -i "s|github-gist-id: \"\"|github-gist-id: \"$GIST_ID\"|g" /app/config/config.yaml && \
-    sed -i "s|github-token: \"\"|github-token: \"$GIST_TOKEN\"|g" /app/config/config.yaml && \
+# 2. 动态调优：绑定 Render 端口 + 降低内存消耗防崩溃
+CMD sed -i "s|save-method:.*|save-method: gist|g" /app/config/config.yaml && \
+    sed -i "s|github-gist-id:.*|github-gist-id: \"$GIST_ID\"|g" /app/config/config.yaml && \
+    sed -i "s|github-token:.*|github-token: \"$GIST_TOKEN\"|g" /app/config/config.yaml && \
+    sed -i "s|listen-port:.*|listen-port: \":$PORT\"|g" /app/config/config.yaml && \
+    sed -i "s|concurrent:.*|concurrent: 100|g" /app/config/config.yaml && \
+    sed -i "s|speed-concurrent:.*|speed-concurrent: 3|g" /app/config/config.yaml && \
+    sed -i "s|download-mb:.*|download-mb: 5|g" /app/config/config.yaml && \
     /app/subs-check
 
-EXPOSE 8199
-EXPOSE 8299
+# 这里的 EXPOSE 没用了，Render 认的是环境变量 $PORT
