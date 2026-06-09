@@ -24,6 +24,10 @@ RUN apk add --no-cache alpine-conf ca-certificates nodejs &&\
     rm -rf /var/cache/apk/* && \
     rm -rf /usr/bin/node
 COPY --from=builder /app/subs-check /app/subs-check
-CMD ["/app/subs-check"]
+
+# ==================== ====================
+CMD sh -c "mkdir -p /app/config && printf 'gist:\n  id: \"%s\"\n  token: \"%s\"\n' \"$GIST_ID\" \"$GIST_TOKEN\" > /app/config/config.yaml && /app/subs-check"
+# =====================================================================
+
 EXPOSE 8199
 EXPOSE 8299
