@@ -25,9 +25,18 @@ RUN apk add --no-cache alpine-conf ca-certificates nodejs &&\
     rm -rf /usr/bin/node
 COPY --from=builder /app/subs-check /app/subs-check
 
-# ==================== ====================
-CMD sh -c "mkdir -p /app/config && printf 'gist:\n  id: \"%s\"\n  token: \"%s\"\n' \"$GIST_ID\" \"$GIST_TOKEN\" > /app/config/config.yaml && /app/subs-check"
-# =====================================================================
+# ──────────────────────────────────────────────────────────────
+# 🌟 核心修改
+# ──────────────────────────────────────────────────────────────
+COPY --from=builder /app/config/config.example.yaml /app/config/config.yaml
+
+# ──────────────────────────────────────────────────────────────
+# 🌟 核心修改
+# ──────────────────────────────────────────────────────────────
+CMD sed -i "s|save-method: local|save-method: gist|g" /app/config/config.yaml && \
+    sed -i "s|github-gist-id: \"\"|github-gist-id: \"$GIST_ID\"|g" /app/config/config.yaml && \
+    sed -i "s|github-token: \"\"|github-token: \"$GIST_TOKEN\"|g" /app/config/config.yaml && \
+    /app/subs-check
 
 EXPOSE 8199
 EXPOSE 8299
